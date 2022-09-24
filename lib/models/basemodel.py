@@ -20,6 +20,7 @@ from lib.visualizer import Visualizer
 from lib.loss import l2_loss
 from lib.evaluate import roc
 import pandas as pd
+import wandb
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -40,6 +41,7 @@ class BaseModel():
         self.trn_dir = os.path.join(self.opt.outf, self.opt.name, 'train')
         self.tst_dir = os.path.join(self.opt.outf, self.opt.name, 'test')
         self.device = torch.device("cuda:0" if self.opt.device != 'cpu' else "cpu")
+        wandb.init()
 
     ##
     def seed(self, seed_value):
@@ -220,6 +222,7 @@ class BaseModel():
             if res['AUC'] > best_auc:
                 best_auc = res['AUC']
                 self.save_weights(self.epoch)
+            wandb.log({"auc": res['AUC'], "best auc": best_auc})
             self.visualizer.print_current_performance(res, best_auc)
         print(">> Training model %s.[Done]" % self.name)
 

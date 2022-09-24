@@ -15,6 +15,7 @@ import torch.utils.data
 import torchvision.utils as vutils
 
 import pandas as pd
+import wandb
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -34,6 +35,7 @@ class Skipganomaly(BaseModel):
 
     def __init__(self, opt, data=None):
         super(Skipganomaly, self).__init__(opt, data)
+        torch.autograd.set_detect_anomaly(True)
         ##
 
         # -- Misc attributes
@@ -44,8 +46,14 @@ class Skipganomaly(BaseModel):
 
         ##
         # Create and initialize networks.
-        self.netg = define_G(self.opt, norm='batch', use_dropout=False, init_type='normal')
-        self.netd = define_D(self.opt, norm='batch', use_sigmoid=False, init_type='normal')
+        # self.netg = define_G(self.opt, norm='batch', use_dropout=False, init_type='kaiming')
+        # self.netd = define_D(self.opt, norm='batch', use_sigmoid=False, init_type='kaiming')
+        # self.netg = define_G(self.opt, norm='instance', use_dropout=True, init_type='kaiming')
+        # self.netd = define_D(self.opt, norm='instance', use_sigmoid=True, init_type='kaiming')
+        self.netg = define_G(self.opt, norm='instance', use_dropout=True, init_type='kaiming')
+        self.netd = define_D(self.opt, norm='instance', use_sigmoid=False, init_type='kaiming')
+        # self.netg = define_G(self.opt, norm='batch', use_dropout=False, init_type='normal')
+        # self.netd = define_D(self.opt, norm='batch', use_sigmoid=False, init_type='normal')
 
         ##
         if self.opt.resume != '':
@@ -122,7 +130,7 @@ class Skipganomaly(BaseModel):
         self.err_d_real = self.l_adv(self.pred_real, self.real_label)
 
         # Combine losses.
-        self.err_d = self.err_d_real + self.err_d_fake + self.err_g_lat
+        self.err_d = self.err_d_real + self.err_d_fake + self.err_g_lat.detach()
         self.err_d.backward(retain_graph=True)
 
     def update_netg(self):

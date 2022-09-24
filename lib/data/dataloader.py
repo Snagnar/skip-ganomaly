@@ -9,7 +9,7 @@ import os
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST, CIFAR10, ImageFolder
-from lib.data.datasets import get_cifar_anomaly_dataset
+from lib.data.datasets import MVTecDataset, PanoramaDataset, get_cifar_anomaly_dataset
 from lib.data.datasets import get_mnist_anomaly_dataset
 
 class Data:
@@ -60,6 +60,18 @@ def load_data(opt):
         train_ds, valid_ds = get_mnist_anomaly_dataset(train_ds, valid_ds, int(opt.abnormal_class))
 
     # FOLDER
+    elif opt.dataset == "mvtec":
+
+        train_ds = MVTecDataset(opt.dataroot, train=True)
+        valid_ds = MVTecDataset(opt.dataroot, train=False)
+        if opt.isize == -1:
+            opt.isize = train_ds.isize
+    elif opt.dataset == "panorama":
+
+        train_ds = PanoramaDataset(opt.dataroot, train=True)
+        valid_ds = PanoramaDataset(opt.dataroot, train=False)
+        if opt.isize == -1:
+            opt.isize = train_ds.isize
     else:
         transform = transforms.Compose([transforms.Resize(opt.isize),
                                         transforms.CenterCrop(opt.isize),
